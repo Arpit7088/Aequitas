@@ -24,67 +24,79 @@ SKILL_DB = [
     "communication", "leadership", "problem solving", "agile", "scrum", "project management", "critical thinking"
 ]
 
-# --- 3. INJECT FONT AWESOME & CUSTOM CSS ---
+# --- 3. INJECT CUSTOM CSS ---
 st.markdown("""
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-    /* Import Font */
+    /* Font Import */
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
     
     html, body, [class*="css"]  {
         font-family: 'Poppins', sans-serif;
     }
     
+    /* Hide default decoration */
+    .stDeployButton {display:none;}
+    
     /* Dark Header Strip */
     .header-strip {
-        background-color: #0f172a; /* Dark Blue-Black Theme */
-        padding: 20px;
-        border-radius: 10px;
+        background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+        padding: 25px;
+        border-radius: 12px;
         color: white;
         display: flex;
         align-items: center;
         margin-bottom: 30px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     .header-logo {
-        font-size: 40px;
-        color: #0078D4; /* The exact blue color you wanted */
+        font-size: 45px;
         margin-right: 20px;
     }
     .header-text h1 {
         margin: 0;
-        font-size: 2.2rem;
+        font-size: 2.5rem;
         font-weight: 700;
         color: white;
+        letter-spacing: 1px;
     }
     .header-text p {
-        margin: 0;
+        margin: 5px 0 0 0;
         font-size: 1rem;
         color: #94a3b8;
     }
 
-    /* Developer Card (Accurate Middle Position) */
-    .dev-card-simple {
-        background-color: #ffffff;
-        border-left: 5px solid #0078D4;
-        padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    /* FASCINATING DEVELOPER NAME CARDS */
+    .dev-container {
         margin-top: 20px;
         margin-bottom: 20px;
     }
     .dev-title {
         font-size: 0.85rem;
-        font-weight: bold;
-        color: #555;
+        font-weight: 700;
+        color: #64748b;
         text-transform: uppercase;
-        margin-bottom: 8px;
+        letter-spacing: 1.2px;
+        margin-bottom: 12px;
     }
-    .dev-list {
+    .dev-name-card {
+        background-color: #ffffff;
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        border-left: 5px solid #0078D4; /* Blue Accent */
         font-size: 1rem;
-        color: #222;
         font-weight: 600;
-        line-height: 1.6;
+        color: #334155;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease; /* Smooth Animation */
+        cursor: default;
+    }
+    /* Hover Effect - The Magic Part */
+    .dev-name-card:hover {
+        background-color: #0078D4;
+        color: white;
+        transform: translateX(5px); /* Moves slightly right */
+        box-shadow: 0 4px 10px rgba(0,120,212,0.3);
     }
 
     /* Score Card & Tags */
@@ -108,6 +120,8 @@ st.markdown("""
     .match-tag { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
     .missing-tag { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
     </style>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 """, unsafe_allow_html=True)
 
 # --- 4. HELPER FUNCTIONS ---
@@ -129,28 +143,26 @@ def extract_skills(text):
         elif " " in skill and skill in cleaned_text: found_skills.add(skill)
     return found_skills
 
-# --- 5. SIDEBAR (Correct Order & Position) ---
+# --- 5. SIDEBAR (Correct Logo & Hover Name Cards) ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=50)
+    # 1. NEW LOGO (Balance Scale)
+    st.image("https://cdn-icons-png.flaticon.com/512/924/924915.png", width=60) # Blue Balance Scale Icon
     st.title("Control Panel")
     
-    # 1. Upload Section
+    # Upload Section
     st.markdown("### 1. Upload Documents")
     uploaded_jd = st.file_uploader("Job Description (JD)", type=["pdf", "docx"])
     uploaded_resume = st.file_uploader("Candidate Resume", type=["pdf", "docx"])
     
     st.markdown("---")
 
-    # 2. Developers Section (Accurate Middle Position)
-    # Order: Devansh -> Arpit -> Arjun
+    # 2. FASCINATING DEVELOPERS SECTION
     st.markdown("""
-        <div class="dev-card-simple">
-            <div class="dev-title">🚀 Developed By</div>
-            <div class="dev-list">
-                1. Devansh Thakur<br>
-                2. Arpit Upadhyay<br>
-                3. Arjun Kumar
-            </div>
+        <div class="dev-container">
+            <div class="dev-title">Created By</div>
+            <div class="dev-name-card">Devansh Thakur</div>
+            <div class="dev-name-card">Arpit Upadhyay</div>
+            <div class="dev-name-card">Arjun Kumar</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -158,10 +170,9 @@ with st.sidebar:
     st.caption("Aequitas v1.0 | Final Year Project")
 
 # --- 6. MAIN PAGE HEADER ---
-# Using FontAwesome Icon as requested in screenshot
 st.markdown("""
     <div class="header-strip">
-        <i class="fas fa-balance-scale header-logo"></i>
+        <i class="fas fa-balance-scale header-logo" style="color: #0078D4;"></i>
         <div class="header-text">
             <h1>Aequitas: AI Resume Auditor</h1>
             <p>Intelligent & Fair Resume Screening System</p>
@@ -229,7 +240,6 @@ else:
     col1, col2 = st.columns([1.2, 1])
     
     with col1:
-        # Using the exact S3 link you provided
         st.image("https://website-artificio.s3.us-west-2.amazonaws.com/Resume_Parsing_a180290fcd.jpg", use_column_width=True)
     
     with col2:
