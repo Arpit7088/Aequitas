@@ -14,15 +14,28 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. CUSTOM CSS FOR PROFESSIONAL LOOK ---
+# --- 2. SKILL DATABASE (Is list ko aap aur bada kar sakte ho) ---
+SKILL_DB = [
+    # Programming Languages
+    "python", "java", "c++", "c", "javascript", "typescript", "php", "ruby", "swift", "kotlin", "go", "rust", "sql", "r", "matlab",
+    # Web Development
+    "html", "css", "react", "angular", "vue", "node.js", "django", "flask", "fastapi", "bootstrap", "tailwind", "jquery",
+    # Data Science & ML
+    "pandas", "numpy", "scikit-learn", "tensorflow", "keras", "pytorch", "opencv", "nltk", "spacy", "matplotlib", "seaborn", "tableau", "power bi", "excel",
+    # Cloud & DevOps
+    "aws", "azure", "google cloud", "docker", "kubernetes", "jenkins", "git", "github", "gitlab", "linux", "unix", "bash", "terraform",
+    # Databases
+    "mysql", "postgresql", "mongodb", "oracle", "sqlite", "redis", "cassandra",
+    # Soft Skills & Others
+    "communication", "leadership", "problem solving", "agile", "scrum", "project management", "critical thinking"
+]
+
+# --- 3. CUSTOM CSS FOR PROFESSIONAL LOOK ---
 st.markdown("""
     <style>
-    /* Background styling */
     .stApp {
         background: linear-gradient(to right, #f8f9fa, #e9ecef);
     }
-    
-    /* Main Title Styling */
     .main-title {
         font-size: 3rem;
         color: #2C3E50;
@@ -36,32 +49,28 @@ st.markdown("""
         text-align: center;
         margin-bottom: 30px;
     }
-    
-    /* Card Styling for Results */
-    .result-card {
-        background-color: white;
-        padding: 20px;
+    .skill-tag {
+        display: inline-block;
+        padding: 5px 10px;
+        margin: 5px;
         border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        text-align: center;
+        font-size: 0.9rem;
+        font-weight: 600;
     }
-    
-    /* Metrics Styling */
-    .metric-value {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #2980b9;
+    .match-tag {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
     }
-    
-    /* Sidebar styling */
-    .sidebar-text {
-        font-size: 1.1rem;
-        color: #ecf0f1;
+    .missing-tag {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HELPER FUNCTIONS ---
+# --- 4. HELPER FUNCTIONS ---
 def get_text_from_pdf(file):
     return extract_text(file)
 
@@ -71,123 +80,119 @@ def get_text_from_docx(file):
 def clean_text(text):
     text = text.lower()
     text = re.sub(r'\n', ' ', text)
-    text = re.sub(r'[^\w\s]', '', text)
+    text = re.sub(r'[^\w\s]', ' ', text) # Punctuation hatao
     return text
 
-# --- 4. SIDEBAR INTERFACE ---
+def extract_skills(text):
+    """Text me se skills dhundh kar set return karega"""
+    found_skills = set()
+    cleaned_text = clean_text(text)
+    words = set(cleaned_text.split()) # Text ko words me todo
+    
+    for skill in SKILL_DB:
+        # Check agar skill as a word exist karta hai (e.g. "java")
+        if skill in words:
+            found_skills.add(skill)
+        # Check for multi-word skills (e.g. "power bi")
+        elif " " in skill and skill in cleaned_text:
+            found_skills.add(skill)
+            
+    return found_skills
+
+# --- 5. SIDEBAR INTERFACE ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=80)
     st.title("📂 Control Panel")
     st.markdown("Upload documents to check compatibility.")
-    
     st.markdown("---")
-    
-    # File Uploaders
-    uploaded_jd = st.file_uploader("1️⃣ Upload Job Description (JD)", type=["pdf", "docx"], help="Upload the JD file here")
-    uploaded_resume = st.file_uploader("2️⃣ Upload Candidate Resume", type=["pdf", "docx"], help="Upload the Resume file here")
-    
+    uploaded_jd = st.file_uploader("1️⃣ Upload Job Description (JD)", type=["pdf", "docx"])
+    uploaded_resume = st.file_uploader("2️⃣ Upload Candidate Resume", type=["pdf", "docx"])
     st.markdown("---")
-    st.info("💡 **Tip:** Use clear PDF or DOCX files for best results.")
-    
     st.markdown("### 👨‍💻 Developer")
     st.markdown("**Arpit Upadhyay**")
-    st.caption("© 2025 Aequitas AI Systems")
 
-# --- 5. MAIN PAGE LOGIC ---
-
-# Header Section
+# --- 6. MAIN PAGE LOGIC ---
 st.markdown('<div class="main-title">⚖️ Aequitas AI</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Intelligent & Fair Resume Screening System</div>', unsafe_allow_html=True)
 
-# Logic
 if uploaded_jd and uploaded_resume:
-    
-    with st.spinner('⚙️ AI is analyzing the resume... Please wait...'):
+    with st.spinner('⚙️ Analyzing Skills & Compatibility...'):
         try:
-            # Extract Text from JD
+            # 1. Text Extraction
             if uploaded_jd.type == "application/pdf":
                 jd_text = get_text_from_pdf(uploaded_jd)
             else:
                 jd_text = get_text_from_docx(uploaded_jd)
 
-            # Extract Text from Resume
             if uploaded_resume.type == "application/pdf":
                 resume_text = get_text_from_pdf(uploaded_resume)
             else:
                 resume_text = get_text_from_docx(uploaded_resume)
 
-            # Clean and Calculate Match
+            # 2. Skill Extraction Logic
+            jd_skills = extract_skills(jd_text)
+            resume_skills = extract_skills(resume_text)
+
+            matched_skills = jd_skills.intersection(resume_skills)
+            missing_skills = jd_skills.difference(resume_skills)
+
+            # 3. Match Score Calculation (Cosine Similarity)
             jd_clean = clean_text(jd_text)
             resume_clean = clean_text(resume_text)
-            
             text_list = [jd_clean, resume_clean]
             cv = CountVectorizer()
             count_matrix = cv.fit_transform(text_list)
             match_percentage = cosine_similarity(count_matrix)[0][1] * 100
             match_percentage = round(match_percentage, 2)
 
-            # --- RESULT DASHBOARD ---
+            # --- DISPLAY RESULTS ---
             st.markdown("---")
-            
-            # Columns for layout
-            col1, col2, col3 = st.columns([1, 2, 1])
-            
-            with col2:
-                st.markdown('<div class="result-card">', unsafe_allow_html=True)
-                st.write("### 🎯 Compatibility Score")
-                
-                # Dynamic Color based on score
-                if match_percentage >= 75:
-                    st.markdown(f'<p class="metric-value" style="color: #27ae60;">{match_percentage}%</p>', unsafe_allow_html=True)
-                    st.success("🌟 **Excellent Match!** This candidate is highly recommended.")
-                    st.balloons()
-                elif match_percentage >= 50:
-                    st.markdown(f'<p class="metric-value" style="color: #f39c12;">{match_percentage}%</p>', unsafe_allow_html=True)
-                    st.warning("⚠️ **Good Match.** Review skills manually.")
-                else:
-                    st.markdown(f'<p class="metric-value" style="color: #c0392b;">{match_percentage}%</p>', unsafe_allow_html=True)
-                    st.error("❌ **Low Match.** Profile does not fit well.")
-                
-                st.progress(int(match_percentage))
-                st.markdown('</div>', unsafe_allow_html=True)
+            col1, col2 = st.columns([1, 1.5])
 
-            # Extra Details Section
-            st.markdown("### 📝 Analysis Details")
-            
-            tab1, tab2 = st.tabs(["📄 Resume Preview", "🔍 Match Insights"])
-            
-            with tab1:
-                st.text_area("Extracted Resume Text (Snippet):", resume_clean[:1000] + "...", height=200)
-            
-            with tab2:
-                st.write("### Missing Keywords:")
-                st.write("*(Feature coming soon in Aequitas v2.0)*")
-                st.info(f"Resume Length: {len(resume_clean)} characters | JD Length: {len(jd_clean)} characters")
+            with col1:
+                st.subheader("🎯 Match Score")
+                st.markdown(f"<h1 style='color: #2980b9;'>{match_percentage}%</h1>", unsafe_allow_html=True)
+                st.progress(int(match_percentage))
+                
+                if match_percentage >= 75:
+                    st.success("✅ Strong Match!")
+                elif match_percentage >= 50:
+                    st.warning("⚠️ Average Match")
+                else:
+                    st.error("❌ Weak Match")
+
+            with col2:
+                st.subheader("🛠️ Skill Analysis")
+                
+                # Matched Skills
+                st.write("**✅ Matched Skills (Present in both):**")
+                if matched_skills:
+                    match_html = "".join([f'<span class="skill-tag match-tag">{skill.upper()}</span>' for skill in matched_skills])
+                    st.markdown(match_html, unsafe_allow_html=True)
+                else:
+                    st.info("No direct skill matches found.")
+
+                st.write("") # Spacer
+
+                # Missing Skills
+                st.write("**❌ Missing Skills (Required by JD):**")
+                if missing_skills:
+                    missing_html = "".join([f'<span class="skill-tag missing-tag">{skill.upper()}</span>' for skill in missing_skills])
+                    st.markdown(missing_html, unsafe_allow_html=True)
+                else:
+                    st.success("No critical skills missing!")
+
+            # Raw Data Preview
+            with st.expander("📄 View Extracted Text"):
+                st.write("**Resume Content Snippet:**")
+                st.caption(resume_clean[:500] + "...")
 
         except Exception as e:
-            st.error(f"❌ An error occurred: {e}")
+            st.error(f"Error: {e}")
 
 else:
-    # Default Landing Page (Jab file upload na ho)
-    st.container()
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # FIX IS HERE: use_column_width instead of use_container_width
-        st.image("https://img.freepik.com/free-vector/hiring-agency-candidates-job-interview_1262-18968.jpg", use_column_width=True)
-    
-    with col2:
-        st.markdown("""
-        ### 👋 Welcome to Aequitas!
-        
-        This tool uses advanced **Natural Language Processing (NLP)** to screen resumes fairly.
-        
-        **How to use:**
-        1. Open the **Sidebar** (Left Panel).
-        2. Upload the **Job Description (JD)**.
-        3. Upload the **Resume**.
-        4. Get an instant **AI Match Score**.
-        
-        *Built for unbiased recruitment.*
-        """)
+    st.info("👈 Please upload both JD and Resume from the sidebar.")
+    # use_column_width is the fix for the error you saw earlier
+    st.image("https://img.freepik.com/free-vector/hiring-agency-candidates-job-interview_1262-18968.jpg", use_column_width=True)
+
 
