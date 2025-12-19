@@ -1,125 +1,191 @@
 import streamlit as st
-import docx2txt
+import pdfminer
 from pdfminer.high_level import extract_text
+import docx2txt
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import re
 
+# --- 1. CONFIGURATION & SETUP ---
+st.set_page_config(
+    page_title="Aequitas | AI Resume Screener",
+    page_icon="⚖️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-def extract_text_from_pdf(pdf_path):
-    text = extract_text(pdf_path)
+# --- 2. CUSTOM CSS FOR PROFESSIONAL LOOK ---
+st.markdown("""
+    <style>
+    /* Background styling */
+    .stApp {
+        background: linear-gradient(to right, #f8f9fa, #e9ecef);
+    }
+    
+    /* Main Title Styling */
+    .main-title {
+        font-size: 3rem;
+        color: #2C3E50;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .sub-title {
+        font-size: 1.2rem;
+        color: #7f8c8d;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    /* Card Styling for Results */
+    .result-card {
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    /* Metrics Styling */
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #2980b9;
+    }
+    
+    /* Sidebar styling */
+    .sidebar-text {
+        font-size: 1.1rem;
+        color: #ecf0f1;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- 3. HELPER FUNCTIONS ---
+def get_text_from_pdf(file):
+    return extract_text(file)
+
+def get_text_from_docx(file):
+    return docx2txt.process(file)
+
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r'\n', ' ', text)
+    text = re.sub(r'[^\w\s]', '', text)
     return text
 
-def extract_skills(text):
-    skills = [
-    'Python', 'Java', 'C++', 'SQL', 'Machine Learning', 'Data Analysis', 'Deep Learning',
-    'NLP', 'Communication', 'Teamwork', 'Leadership', 'Problem Solving', 'Docker', 'Kubernetes',
-    'Project Management', 'Linux', 'Git', 'HTML', 'CSS', 'JavaScript', 'Excel', 'Power BI',
-    'Tableau', 'Data Visualization', 'Pandas', 'NumPy', 'TensorFlow', 'PyTorch', 'R',
-    'Statistical Analysis', 'AWS', 'Azure', 'Google Cloud', 'DevOps', 'Agile', 'Scrum',
-    'REST APIs', 'GraphQL', 'JSON', 'XML', 'Bootstrap', 'React', 'Angular', 'Vue.js',
-    'Node.js', 'Django', 'Flask', 'Ruby on Rails', 'SQL Server', 'PostgreSQL', 'MongoDB',
-    'Cassandra', 'Redis', 'Hadoop', 'Spark', 'Kafka', 'Jenkins', 'CI/CD', 'JIRA',
-    'MATLAB', 'Simulink', 'Computer Vision', 'OpenCV', 'Natural Language Processing', 'Spacy',
-    'Gensim', 'AWS S3', 'AWS Lambda', 'Terraform', 'Ansible', 'Apache Beam', 'BigQuery',
-    'Keras', 'Scikit-learn', 'XGBoost', 'LightGBM', 'Time Series Analysis', 'Hyperparameter Tuning',
-    'Cross-Validation', 'A/B Testing', 'Market Basket Analysis', 'Churn Prediction', 'Customer Segmentation',
-    'Business Intelligence', 'ETL', 'Data Warehousing', 'Data Mining', 'Database Management', 'NoSQL Databases',
-    'MySQL', 'Oracle', 'PL/SQL', 'SSIS', 'SSRS', 'SSAS', 'Data Cleaning', 'Feature Engineering',
-    'Regression Analysis', 'Classification', 'Clustering', 'Dimensionality Reduction', 'Principal Component Analysis',
-    'Linear Regression', 'Logistic Regression', 'Decision Trees', 'Random Forests', 'Support Vector Machines',
-    'Ensemble Methods', 'Bayesian Methods', 'Monte Carlo Simulation', 'Financial Modeling', 'Risk Management',
-    'Blockchain', 'Cryptography', 'Cybersecurity', 'Penetration Testing', 'Ethical Hacking', 'Network Security',
-    'IoT', 'Embedded Systems', 'Robotics', 'Automation', 'Control Systems', 'Digital Signal Processing',
-    'Image Processing', 'Video Processing', 'Augmented Reality', 'Virtual Reality', '3D Modeling', 'Unity',
-    'Unreal Engine', 'Game Development', 'Mobile App Development', 'Android', 'iOS', 'Swift', 'Kotlin',
-    'Objective-C', 'React Native', 'Flutter', 'Machine Translation', 'Speech Recognition', 'Voice Assistants',
-    'Chatbots', 'AI Ethics', 'Data Governance', 'Data Privacy', 'GDPR Compliance', 'Business Analysis'
-]
-
-    text = text.lower()
-    text = re.sub(r'[^\w\s]', '', text)
-
-    matched_skills = [skill for skill in skills if skill.lower() in text]
-
-    return matched_skills
-
-# Streamlit App
-st.markdown("""
-    <head>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    </head>
-    <div style='text-align: center; padding: 15px;'>
-        <h1 style='color: black;'><i class="fas fa-file-alt" style="color: #003366;"></i> Resume Parsing WebApp</h1>
-    </div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-    <h3 style='font-size: 22px; color: #333333;'>Upload the Job Description and your Resume files to check your compatibility with the job.</h3>
-""", unsafe_allow_html=True)
-
-job_desc_file = st.file_uploader("Upload Job description (PDF or DOCX)", type = ['pdf', 'docx'])
-resume_file = st.file_uploader("Upload your Resume (PDF or DOCX)", type = ['pdf', 'docx'])
-
-
-if st.button("Calculate"):
-    if resume_file and job_desc_file:
-        if resume_file.name.endswith('.pdf'):
-            resume_text = extract_text_from_pdf(resume_file)
-        else:
-            resume_text = docx2txt.process(resume_file)
-
-        if job_desc_file.name.endswith('.pdf'):
-            job_desc_text = extract_text_from_pdf(job_desc_file)
-        else:
-            job_desc_text = docx2txt.process(job_desc_file)
-
-
-        # Calculate similarity
-        text = [resume_text, job_desc_text]
-        cv = CountVectorizer()
-        count_matrix = cv.fit_transform(text)
-        similarity_scores = cosine_similarity(count_matrix)
-
-        similarity_score = similarity_scores[0][1] * 100 
-        similarity_score = round(similarity_score, 2)
-
-        # Display the similarity score with custom styling
-        st.markdown(f"""
-            <div style='background-color: #f9f9f9; padding: 15px; border-radius: 10px;'>
-                <h2 style='color: #4CAF50;'>📝 Resume Compatibility Score</h2>
-                <p style='font-size: 24px; color: #333;'>
-                 Your resume matches about <strong>{similarity_score}%</strong> of the job description.
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # Skills Comparison
-        resume_skills = extract_skills(resume_text)
-        job_desc_skills = extract_skills(job_desc_text)
-
-        matching_skills = set(resume_skills).intersection(set(job_desc_skills))
-        missing_skills = set(job_desc_skills) - set(resume_skills)
-
-        
-        col1, col2 = st.columns(2)
-
-        with col1:
-            # Display matching skills
-            if matching_skills:
-                st.markdown("### Matching Skills: ")
-                st.markdown(f"<p style='color:#1f77b4; font-size:16px;'> {' | '.join(matching_skills)} </p>", unsafe_allow_html=True)
-            else:
-                st.error("No matching skills found.")
-
-        with col2:
-            # Display missing skills
-            if missing_skills:
-                st.markdown("### Missing Skills: ")
-                st.markdown(f"<p style='color:#1f77b4; font-size:16px;'> {' | '.join(missing_skills)} </p>", unsafe_allow_html=True)
-            else:
-                st.success("You have all the required skills!")
-
+# --- 4. SIDEBAR INTERFACE ---
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=80)
+    st.title("📂 Control Panel")
+    st.markdown("Upload documents to check compatibility.")
     
-    else:
-        st.write("Please upload both the job description and your resume files. ")
+    st.markdown("---")
+    
+    # File Uploaders
+    uploaded_jd = st.file_uploader("1️⃣ Upload Job Description (JD)", type=["pdf", "docx"], help="Upload the JD file here")
+    uploaded_resume = st.file_uploader("2️⃣ Upload Candidate Resume", type=["pdf", "docx"], help="Upload the Resume file here")
+    
+    st.markdown("---")
+    st.info("💡 **Tip:** Use clear PDF or DOCX files for best results.")
+    
+    st.markdown("### 👨‍💻 Developer")
+    st.markdown("**Arpit Upadhyay**")
+    st.caption("© 2025 Aequitas AI Systems")
+
+# --- 5. MAIN PAGE LOGIC ---
+
+# Header Section
+st.markdown('<div class="main-title">⚖️ Aequitas AI</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">Intelligent & Fair Resume Screening System</div>', unsafe_allow_html=True)
+
+# Logic
+if uploaded_jd and uploaded_resume:
+    
+    with st.spinner('⚙️ AI is analyzing the resume... Please wait...'):
+        try:
+            # Extract Text from JD
+            if uploaded_jd.type == "application/pdf":
+                jd_text = get_text_from_pdf(uploaded_jd)
+            else:
+                jd_text = get_text_from_docx(uploaded_jd)
+
+            # Extract Text from Resume
+            if uploaded_resume.type == "application/pdf":
+                resume_text = get_text_from_pdf(uploaded_resume)
+            else:
+                resume_text = get_text_from_docx(uploaded_resume)
+
+            # Clean and Calculate Match
+            jd_clean = clean_text(jd_text)
+            resume_clean = clean_text(resume_text)
+            
+            text_list = [jd_clean, resume_clean]
+            cv = CountVectorizer()
+            count_matrix = cv.fit_transform(text_list)
+            match_percentage = cosine_similarity(count_matrix)[0][1] * 100
+            match_percentage = round(match_percentage, 2)
+
+            # --- RESULT DASHBOARD ---
+            st.markdown("---")
+            
+            # Columns for layout
+            col1, col2, col3 = st.columns([1, 2, 1])
+            
+            with col2:
+                st.markdown('<div class="result-card">', unsafe_allow_html=True)
+                st.write("### 🎯 Compatibility Score")
+                
+                # Dynamic Color based on score
+                if match_percentage >= 75:
+                    st.markdown(f'<p class="metric-value" style="color: #27ae60;">{match_percentage}%</p>', unsafe_allow_html=True)
+                    st.success("🌟 **Excellent Match!** This candidate is highly recommended.")
+                    st.balloons()
+                elif match_percentage >= 50:
+                    st.markdown(f'<p class="metric-value" style="color: #f39c12;">{match_percentage}%</p>', unsafe_allow_html=True)
+                    st.warning("⚠️ **Good Match.** Review skills manually.")
+                else:
+                    st.markdown(f'<p class="metric-value" style="color: #c0392b;">{match_percentage}%</p>', unsafe_allow_html=True)
+                    st.error("❌ **Low Match.** Profile does not fit well.")
+                
+                st.progress(int(match_percentage))
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            # Extra Details Section
+            st.markdown("### 📝 Analysis Details")
+            
+            tab1, tab2 = st.tabs(["📄 Resume Preview", "🔍 Match Insights"])
+            
+            with tab1:
+                st.text_area("Extracted Resume Text (Snippet):", resume_clean[:1000] + "...", height=200)
+            
+            with tab2:
+                st.write("### Missing Keywords:")
+                st.write("*(Feature coming soon in Aequitas v2.0)*")
+                st.info(f"Resume Length: {len(resume_clean)} characters | JD Length: {len(jd_clean)} characters")
+
+        except Exception as e:
+            st.error(f"❌ An error occurred: {e}")
+
+else:
+    # Default Landing Page (Jab file upload na ho)
+    st.container()
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.image("https://img.freepik.com/free-vector/hiring-agency-candidates-job-interview_1262-18968.jpg", use_container_width=True)
+    
+    with col2:
+        st.markdown("""
+        ### 👋 Welcome to Aequitas!
+        
+        This tool uses advanced **Natural Language Processing (NLP)** to screen resumes fairly.
+        
+        **How to use:**
+        1. Open the **Sidebar** (Left Panel).
+        2. Upload the **Job Description (JD)**.
+        3. Upload the **Resume**.
+        4. Get an instant **AI Match Score**.
+        
+        *Built for unbiased recruitment.*
+        """)
