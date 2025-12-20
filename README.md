@@ -1,35 +1,79 @@
-# Aequitas: An Intelligent and Fair AI System for Resume Screening ⚖️🤖
+# ⚖️ Aequitas: AI Resume Auditor
 
-## Introduction
-**Aequitas** (meaning Fairness) is a web application designed to evaluate the compatibility of a resume with a job description. Utilizing Natural Language Processing (NLP) techniques, the app extracts and compares key skills from both documents to provide a compatibility score. 
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.31.0-FF4B4B)
+![Status](https://img.shields.io/badge/Status-Live-success)
 
-The goal of Aequitas is to make recruitment **unbiased** and efficient by focusing purely on skills and compatibility scores using machine learning models.
+> **Intelligent & Fair Resume Screening System using NLP.** > *Analyzes Resumes against Job Descriptions to provide Match Scores & Skill Gap Analysis.*
 
+---
 
-## Features
-- **File Upload:** Users can upload job descriptions and resumes in PDF or DOCX format.
-- **Text Extraction:** Extracts text from uploaded documents using `pdfminer` and `docx2txt`.
-- **Skill Extraction:** Identifies and extracts relevant skills from the text using a predefined skill set.
-- **Compatibility Score:** Calculates a similarity score between the resume and the job description.
-- **Skills Comparison:** Displays matching and missing skills based on the extracted data.
-  
-## Technical Details
-1. **Text Extraction:**
-   - PDF text extraction is performed using `pdfminer`.
-   - DOCX text extraction is done using `docx2txt`.
+## 🚀 Live Demo
+Check out the live application here:  
+👉 **[Launch Aequitas AI App](https://aequitas-arpit7088.streamlit.app/)** *(Note: If the link doesn't open, please check the repository description)*
 
-2. **Skill Extraction:**
-   - Skills are matched against a predefined list using regular expressions.
+---
 
-3. **Similarity Calculation:**
-   - Utilizes `CountVectorizer` and `cosine_similarity` from `sklearn` to compute the compatibility score.
+## 🧐 About The Project
 
-4. **Streamlit WebApp:**
-   - Provides an interactive interface for users to upload files and view results.
-   - Displays the compatibility score and skill comparison using custom styling.
+**Aequitas AI** is a Resume Parsing and Screening tool designed to help recruiters and candidates by automating the initial screening process. Unlike traditional keyword matching, this tool uses **Cosine Similarity** and **Natural Language Processing (NLP)** to calculate the match percentage accurately.
 
-## Installation
-1. Clone the repository:
-   ```bash
-   git clone [https://github.com/Arpit7088/Aequitas.git](https://github.com/Arpit7088/Aequitas.git)
-   cd Aequitas
+### Key Features:
+* **📄 Multi-Format Support:** Accepts PDF and DOCX files for both Resumes and JDs.
+* **🧠 Intelligent Parsing:** Extracts text and cleans it using NLP techniques (Regex & Tokenization).
+* **📊 Compatibility Score:** Calculates a match percentage (0-100%) based on vector similarity.
+* **🧬 Skill DNA Analysis:**
+    * ✅ **Matched Skills:** Shows skills present in both documents.
+    * ❌ **Missing Skills:** Highlights critical skills missing from the resume.
+* **⚖️ Bias Reduction:** Focuses purely on technical skills and content.
+
+---
+
+## 📸 Screenshots
+
+| **Dashboard Interface** | **Analysis Result** |
+|:---:|:---:|
+| <img src="https://website-artificio.s3.us-west-2.amazonaws.com/Resume_Parsing_a180290fcd.jpg" width="400"> | *Add your result screenshot here* |
+
+---
+
+## 🛠️ Tech Stack
+
+* **Frontend:** [Streamlit](https://streamlit.io/)
+* **Backend:** Python 3.10
+* **NLP & ML:** Scikit-Learn (Cosine Similarity, CountVectorizer)
+* **Text Processing:** `pdfminer.six` (PDF), `docx2txt` (DOCX), `re` (Regex)
+
+---
+
+## ⚙️ How to Run Locally
+
+If you want to run this project on your local machine, follow these steps:
+
+1.  **Clone the Repository**
+    ```bash
+    git clone [https://github.com/Arpit7088/Aequitas.git](https://github.com/Arpit7088/Aequitas.git)
+    cd Aequitas
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Run the App**
+    ```bash
+    streamlit run app.py
+    ```
+
+---
+
+## 👨‍💻 By
+
+**Arpit Upadhyay** *B.Tech AI/ML Student* GitHub: [@Arpit7088](https://github.com/Arpit7088)
+
+---
+
+<p align="center">
+  <i>Built with ❤️ using Python & Streamlit</i>
+</p>
